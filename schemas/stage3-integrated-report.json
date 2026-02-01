@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stage 3: Integrated Report Output",
+  "type": "object",
+  "required": ["title", "sections"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "사업계획서 제목"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "부제"
+    },
+    "sections": {
+      "type": "array",
+      "description": "리포트 섹션들 (고정된 순서)",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "content"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "섹션 고유 ID",
+            "enum": [
+              "business-overview",
+              "market-analysis",
+              "competitor-analysis",
+              "revenue-model",
+              "business-structure",
+              "development-guide"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "섹션 제목"
+          },
+          "content": {
+            "type": "string",
+            "description": "마크다운 형식 컨텐츠"
+          },
+          "subsections": {
+            "type": "array",
+            "description": "하위 섹션 (선택적)",
+            "items": {
+              "type": "object",
+              "required": ["id", "title", "content"],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "마크다운 형식 컨텐츠"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["light", "pro", "heavy"]
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

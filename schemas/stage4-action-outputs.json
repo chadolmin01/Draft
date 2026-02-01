@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stage 4: Action Outputs",
+  "description": "실행 액션별 출력 스키마",
+  "definitions": {
+    "landing_page": {
+      "type": "object",
+      "required": ["sections", "html_template"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "content"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["hero", "problem", "solution", "features", "pricing", "cta"]
+              },
+              "headline": {
+                "type": "string"
+              },
+              "subheadline": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "button_text": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "html_template": {
+          "type": "string",
+          "description": "완성된 HTML 템플릿 코드"
+        },
+        "design_notes": {
+          "type": "string",
+          "description": "디자인 가이드 및 커스터마이징 힌트"
+        }
+      }
+    },
+    "business_plan_doc": {
+      "type": "object",
+      "required": ["format", "sections"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["formal", "pitch", "government"],
+          "description": "문서 포맷 타입"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "content"],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string",
+                "description": "마크다운 형식"
+              }
+            }
+          }
+        },
+        "pdf_ready": {
+          "type": "boolean",
+          "description": "PDF 변환 준비 여부"
+        }
+      }
+    },
+    "pitch_deck": {
+      "type": "object",
+      "required": ["slides"],
+      "properties": {
+        "slides": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "required": ["number", "title", "content"],
+            "properties": {
+              "number": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "title": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string",
+                "description": "슬라이드 본문 (bullet points)"
+              },
+              "visual_suggestion": {
+                "type": "string",
+                "description": "추천 비주얼 요소"
+              },
+              "speaker_notes": {
+                "type": "string",
+                "description": "발표 노트"
+              }
+            }
+          }
+        }
+      }
+    },
+    "mvp_blueprint": {
+      "type": "object",
+      "required": ["features", "tech_stack", "roadmap"],
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["priority", "name", "description"],
+            "properties": {
+              "priority": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3,
+                "description": "1=필수, 2=중요, 3=나중에"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "estimated_complexity": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              }
+            }
+          }
+        },
+        "tech_stack": {
+          "type": "object",
+          "properties": {
+            "frontend": {
+              "type": "string"
+            },
+            "backend": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            },
+            "infrastructure": {
+              "type": "string"
+            },
+            "reasoning": {
+              "type": "string",
+              "description": "기술 스택 선택 이유"
+            }
+          }
+        },
+        "roadmap": {
+          "type": "array",
+          "description": "단계별 체크리스트",
+          "items": {
+            "type": "object",
+            "required": ["phase", "tasks"],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "description": "예: Week 1-2, Month 1, etc."
+              },
+              "tasks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,316 @@
+/* 인쇄 최적화 스타일 */
+@media print {
+  /* 페이지 설정 */
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+
+  /* 인쇄하지 않을 요소들 숨김 */
+  header,
+  aside,
+  .no-print,
+  button,
+  nav {
+    display: none !important;
+  }
+
+  /* 배경색 제거 (잉크 절약) */
+  * {
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  /* 본문 스타일 */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  /* 메인 컨텐츠 최적화 */
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 섹션 페이지 나누기 */
+  .report-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 2cm;
+  }
+
+  /* 섹션 간 페이지 나누기 */
+  .report-section:not(:first-child) {
+    page-break-before: auto;
+  }
+
+  /* 제목 스타일 */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    color: black !important;
+  }
+
+  h1 {
+    font-size: 24pt;
+    margin-top: 0;
+    margin-bottom: 12pt;
+    border-bottom: 2pt solid #333;
+    padding-bottom: 6pt;
+  }
+
+  h2 {
+    font-size: 18pt;
+    margin-top: 16pt;
+    margin-bottom: 10pt;
+    border-bottom: 1pt solid #666;
+    padding-bottom: 4pt;
+  }
+
+  h3 {
+    font-size: 14pt;
+    margin-top: 12pt;
+    margin-bottom: 8pt;
+  }
+
+  /* 텍스트 */
+  p, li, span, div {
+    color: black !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* 링크 */
+  a {
+    color: black !important;
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* 카드 & 컨테이너 */
+  .bg-card,
+  .bg-secondary,
+  .rounded-2xl,
+  .rounded-xl {
+    border: 1pt solid #ddd !important;
+    padding: 10pt;
+    margin-bottom: 10pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* 그리드 레이아웃 */
+  .grid {
+    display: block;
+  }
+
+  .grid > * {
+    margin-bottom: 8pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* 테이블 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  td, th {
+    border: 1pt solid #ddd;
+    padding: 8pt;
+  }
+
+  /* 리스트 */
+  ul, ol {
+    page-break-inside: auto;
+    margin-left: 20pt;
+  }
+
+  li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* 구분선 */
+  hr,
+  .border-b,
+  .divide-y > * {
+    border-color: #ccc !important;
+    page-break-after: auto;
+  }
+
+  /* 이미지 */
+  img {
+    max-width: 100%;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* 코드 블록 */
+  pre, code {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border: 1pt solid #ddd;
+    padding: 4pt;
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+  }
+
+  /* 배지 */
+  .badge,
+  [class*="badge"] {
+    border: 1pt solid #666 !important;
+    padding: 2pt 6pt;
+    display: inline-block;
+  }
+
+  /* 페이지 헤더 (첫 페이지만) */
+  .print-header {
+    display: block;
+    text-align: center;
+    margin-bottom: 1cm;
+    padding-bottom: 0.5cm;
+    border-bottom: 2pt solid #333;
+  }
+
+  /* 페이지 푸터 */
+  .print-footer {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9pt;
+    color: #666;
+    border-top: 1pt solid #ccc;
+    padding-top: 8pt;
+  }
+
+  /* 컬러 강조 요소들 */
+  .text-primary,
+  .text-destructive,
+  .text-green-600,
+  .text-red-600 {
+    color: black !important;
+    font-weight: bold;
+  }
+
+  /* 배경 강조 제거 */
+  .bg-green-50,
+  .bg-red-50,
+  .bg-blue-50,
+  .bg-yellow-50 {
+    background: white !important;
+    border: 1pt solid #ddd !important;
+  }
+
+  /* Flex 레이아웃 인쇄 최적화 */
+  .flex {
+    display: block;
+  }
+
+  .flex > * {
+    display: block;
+    margin-bottom: 4pt;
+  }
+
+  /* 여백 조정 */
+  .mb-24 {
+    margin-bottom: 1.5cm;
+  }
+
+  .mb-12 {
+    margin-bottom: 0.8cm;
+  }
+
+  .mb-8 {
+    margin-bottom: 0.5cm;
+  }
+
+  /* 경쟁사 카드 */
+  .competitor-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1pt solid #ddd !important;
+    padding: 10pt;
+    margin-bottom: 10pt;
+  }
+
+  /* TAM-SAM-SOM 그리드 */
+  .market-size-grid > * {
+    display: inline-block;
+    width: 32%;
+    vertical-align: top;
+    margin-right: 1%;
+    border: 1pt solid #ddd;
+    padding: 8pt;
+    text-align: center;
+  }
+
+  /* 프린트 전용 클래스 */
+  .print-only {
+    display: block !important;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  /* 그림자 제거 */
+  .shadow,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* 투명도 제거 */
+  [class*="opacity-"],
+  [class*="bg-opacity-"] {
+    opacity: 1 !important;
+  }
+
+  /* 애니메이션 제거 */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 인쇄 미리보기용 클래스 (선택적으로 추가) */
+.print-preview {
+  max-width: 21cm;
+  min-height: 29.7cm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  padding: 2cm;
+}

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run dev:*)",
+      "Bash(.web-implementationsetup-gemini.bat)",
+      "Bash(cmd /c \"web-implementation\\\\setup-gemini.bat\")",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(node test-api.js:*)",
+      "Bash(node:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(dir:*)",
+      "Bash(taskkill //F //PID 28692)",
+      "Bash(ls:*)"
+    ]
+  }
+}

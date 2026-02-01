@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stage 2: Market Analysis Output",
+  "type": "object",
+  "required": ["market_analysis", "competitors", "feasibility_score"],
+  "properties": {
+    "market_analysis": {
+      "type": "object",
+      "required": ["market_size", "growth_rate", "target_segment"],
+      "properties": {
+        "market_size": {
+          "type": "string",
+          "description": "전체 시장 규모 (금액 또는 사용자 수 기반)"
+        },
+        "growth_rate": {
+          "type": "string",
+          "description": "연평균 성장률 (CAGR) 또는 트렌드"
+        },
+        "target_segment": {
+          "type": "string",
+          "description": "타겟 세그먼트의 구체적 규모"
+        },
+        "market_trends": {
+          "type": "array",
+          "description": "주요 시장 트렌드",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "competitors": {
+      "type": "array",
+      "description": "경쟁사 분석 (티어별 개수 차등)",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["name", "strength", "weakness", "differentiation"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "경쟁사명"
+          },
+          "strength": {
+            "type": "string",
+            "description": "경쟁사의 강점"
+          },
+          "weakness": {
+            "type": "string",
+            "description": "경쟁사의 약점"
+          },
+          "differentiation": {
+            "type": "string",
+            "description": "우리 아이디어와의 차별점"
+          },
+          "url": {
+            "type": "string",
+            "description": "경쟁사 웹사이트 (선택)"
+          }
+        }
+      }
+    },
+    "feasibility_score": {
+      "type": "number",
+      "description": "시장 실현 가능성 점수 (0.0 ~ 1.0)",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "risks": {
+      "type": "array",
+      "description": "주요 위험 요소 (낙관적 편향 방지)",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

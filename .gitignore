@@ -1,0 +1,32 @@
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# Node
+node_modules/
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Test outputs
+tests/outputs/
+*.log
