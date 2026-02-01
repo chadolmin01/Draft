@@ -9,7 +9,7 @@ import path from 'path';
  * 프롬프트 파일 읽기
  */
 export function loadPrompt(stage: number, tier: 'light' | 'pro' | 'heavy'): string {
-  const promptsDir = path.join(process.cwd(), '..', 'prompts');
+  const promptsDir = path.join(process.cwd(), 'prompts');
 
   // Stage별, 티어별 프롬프트 파일 선택
   let fileName: string;
@@ -45,7 +45,7 @@ export function loadPrompt(stage: number, tier: 'light' | 'pro' | 'heavy'): stri
  * Knowledge base 파일 읽기
  */
 export function loadKnowledgeBase(fileName: string): string {
-  const kbDir = path.join(process.cwd(), '..', 'knowledge-base');
+  const kbDir = path.join(process.cwd(), 'knowledge-base');
   const filePath = path.join(kbDir, fileName);
 
   if (!fs.existsSync(filePath)) {
@@ -64,7 +64,7 @@ export function loadDeepPrompt(
   group: 'market-deep' | 'strategy' | 'external',
   mainSummary: object
 ): string {
-  const promptsDir = path.join(process.cwd(), '..', 'prompts');
+  const promptsDir = path.join(process.cwd(), 'prompts');
   
   // group 이름을 파일명으로 매핑
   const fileNameMap: Record<string, string> = {

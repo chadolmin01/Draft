@@ -41,7 +41,7 @@ git push -u origin main
 | 설정 | 값 |
 |------|-----|
 | **Framework Preset** | Next.js (자동 감지) |
-| **Root Directory** | `frontend` ⚠️ **반드시 설정** |
+| **Root Directory** | `frontend` ⚠️ **반드시 설정** (prompts, knowledge-base는 frontend 내부에 있음) |
 | **Build Command** | `npm run build` (기본값) |
 | **Output Directory** | `.next` (기본값) |
 
