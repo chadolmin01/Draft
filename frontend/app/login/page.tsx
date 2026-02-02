@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { DraftLogo } from '@/components/draft-logo';
 import { AuthDialog } from '@/components/auth-dialog';
+import { DeepDraftBanner } from '@/components/deepdraft-banner';
 import { useAuth } from '@/lib/auth-context';
 import { Mail, ChevronDown } from 'lucide-react';
 
@@ -109,7 +110,7 @@ export default function LoginPage() {
               className="w-full h-9 rounded-xl bg-background border border-slate-300 dark:border-slate-600 text-foreground font-medium flex items-center justify-center gap-2 text-sm hover:bg-secondary/40 transition-colors"
             >
               <GoogleIcon className="w-4 h-4 text-muted-foreground" />
-              <span>Login with Google</span>
+              <span>Continue with Google</span>
             </button>
 
             <button
@@ -118,7 +119,7 @@ export default function LoginPage() {
               className="w-full h-9 rounded-xl bg-background border border-slate-300 dark:border-slate-600 text-foreground font-medium flex items-center justify-center gap-2 text-sm hover:bg-secondary/40 transition-colors"
             >
               <GitHubIcon className="w-4 h-4 text-muted-foreground" />
-              <span>Login with GitHub</span>
+              <span>Continue with GitHub</span>
             </button>
           </div>
 
@@ -180,6 +181,9 @@ export default function LoginPage() {
 
       {/* Email Login Modal */}
       <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+
+      {/* DeepDraft Banner */}
+      <DeepDraftBanner />
     </div>
   );
 }

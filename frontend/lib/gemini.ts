@@ -5,7 +5,34 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { parseGeminiError, rateLimitTracker } from './api-error-handler';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+const apiKey = process.env.GOOGLE_API_KEY?.trim();
+if (!apiKey || apiKey === 'your_google_api_key') {
+  console.warn(
+    '[Gemini] GOOGLE_API_KEY가 설정되지 않았습니다. ' +
+    'frontend/.env.local에 Google AI Studio에서 발급한 API 키를 설정하세요. ' +
+    'https://aistudio.google.com/app/apikey'
+  );
+}
+
+const genAI = new GoogleGenerativeAI(apiKey || '');
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+async function callGeminiOnce(prompt: string, useJsonMode: boolean): Promise<string> {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+      ...(useJsonMode && { responseMimeType: 'application/json' }),
+    },
+  });
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  return response.text();
+}
 
 export async function callGemini(
   prompt: string,
@@ -19,35 +46,34 @@ export async function callGemini(
     );
   }
 
-  try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 8192,
-        ...(useJsonMode && { responseMimeType: 'application/json' }),
-      },
-    });
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const text = await callGeminiOnce(prompt, useJsonMode);
+      if (typeof window !== 'undefined') {
+        rateLimitTracker.addRequest();
+      }
+      return text;
+    } catch (error) {
+      lastError = error;
+      const msg = error instanceof Error ? error.message : String(error);
+      const isNetworkError = msg.includes('fetch') || msg.includes('network') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT');
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    
-    // 성공 시 요청 기록
-    if (typeof window !== 'undefined') {
-      rateLimitTracker.addRequest();
+      if (isNetworkError && attempt < MAX_RETRIES) {
+        console.warn(`[Gemini] 네트워크 오류, ${RETRY_DELAY_MS / 1000}초 후 재시도 (${attempt}/${MAX_RETRIES})`);
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      } else {
+        break;
+      }
     }
-    
-    return response.text();
-  } catch (error) {
-    // 에러를 파싱하여 더 자세한 정보 제공
-    const apiError = parseGeminiError(error);
-    console.error('Gemini API Error:', apiError);
-    
-    // 원본 에러에 파싱된 정보 추가
-    const enhancedError = new Error(apiError.message);
-    (enhancedError as any).apiError = apiError;
-    throw enhancedError;
   }
+
+  const error = lastError;
+  console.error('[Gemini] 원본 에러:', error instanceof Error ? error.message : error);
+  const apiError = parseGeminiError(error);
+  const enhancedError = new Error(apiError.message);
+  (enhancedError as any).apiError = apiError;
+  throw enhancedError;
 }
 
 /**

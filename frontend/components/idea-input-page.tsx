@@ -7,11 +7,13 @@ import { isMockMode } from '@/lib/mock-mode';
 import { HeroInput } from '@/components/hero-input';
 import { GrokLayout } from '@/components/grok-layout';
 import { LogoSliced } from '@/components/logo-sliced';
+import { useAuth } from '@/lib/auth-context';
 
 export function IdeaInputPage() {
   const [idea, setIdea] = useState('');
   const [tier, setTier] = useState<Tier>('light');
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const handleSubmit = async () => {
     if (!idea.trim()) return;
@@ -23,7 +25,7 @@ export function IdeaInputPage() {
       const response = await fetch('/api/ideas', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ idea, tier }),
+        body: JSON.stringify({ idea, tier, userId: user?.id ?? null }),
       });
       const result = await response.json();
 
@@ -48,7 +50,8 @@ export function IdeaInputPage() {
       }
     } catch (error) {
       console.error('API 호출 실패:', error);
-      alert('API 호출에 실패했습니다.');
+      const msg = error instanceof Error ? error.message : 'API 호출에 실패했습니다.';
+      alert(msg);
       setLoading(false);
     }
   };
@@ -84,6 +87,7 @@ export function IdeaInputPage() {
             onTierChange={setTier}
             disabled={loading}
             placeholder="예: 반려견을 위한 AI 건강진단 앱"
+            isLoggedIn={!!user}
           />
         </div>
 

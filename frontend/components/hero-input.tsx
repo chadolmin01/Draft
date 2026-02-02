@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Send, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Tier } from '@/lib/types';
@@ -14,6 +15,8 @@ interface HeroInputProps {
   tier: Tier;
   onTierChange: (tier: Tier) => void;
   className?: string;
+  /** 비로그인 시 Pro/Heavy 비활성화 */
+  isLoggedIn?: boolean;
 }
 
 export function HeroInput({
@@ -24,10 +27,12 @@ export function HeroInput({
   disabled,
   tier,
   onTierChange,
-  className
+  className,
+  isLoggedIn = true,
 }: HeroInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isTierOpen, setIsTierOpen] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Auto-resize logic (Simplified for single line focus but expandable)
   useEffect(() => {
@@ -91,23 +96,44 @@ export function HeroInput({
             </button>
             {isTierOpen && (
               <div className="absolute top-full mt-2 right-0 w-28 bg-popover border border-border/60 rounded-lg shadow-lg py-1 z-50">
-                {tiers.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => {
-                      onTierChange(t.value);
-                      setIsTierOpen(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-secondary/50",
-                      tier === t.value ? "text-foreground font-medium" : "text-muted-foreground"
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {tiers.map((t) => {
+                  const isLocked = !isLoggedIn && (t.value === 'pro' || t.value === 'heavy');
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => {
+                        if (isLocked) {
+                          setIsTierOpen(false);
+                          setShowLoginPrompt(true);
+                          return;
+                        }
+                        onTierChange(t.value);
+                        setIsTierOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs transition-colors",
+                        isLocked && "opacity-60 cursor-not-allowed",
+                        !isLocked && "hover:bg-secondary/50",
+                        tier === t.value ? "text-foreground font-medium" : "text-muted-foreground"
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
               </div>
+            )}
+            {showLoginPrompt && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowLoginPrompt(false)} />
+                <div className="absolute top-full mt-2 right-0 w-64 p-3 bg-popover border border-border/60 rounded-lg shadow-lg z-50 text-xs text-muted-foreground">
+                  로그인하면 Pro/Heavy를 사용할 수 있어요
+                  <Link href="/login" className="block mt-2 text-primary font-medium hover:underline" onClick={() => setShowLoginPrompt(false)}>
+                    로그인하기 →
+                  </Link>
+                </div>
+              </>
             )}
           </div>
 
@@ -116,6 +142,8 @@ export function HeroInput({
             type="button"
             onClick={handleSubmit}
             disabled={disabled || !value.trim()}
+            title="제출"
+            aria-label="제출"
             className={cn(
               "p-1.5 rounded-full transition-all duration-200",
               value.trim() && !disabled

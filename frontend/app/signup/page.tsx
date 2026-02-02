@@ -94,7 +94,7 @@ export default function SignupPage() {
               className="w-full h-9 rounded-xl bg-background border border-slate-300 dark:border-slate-600 text-foreground font-medium flex items-center justify-center gap-2 text-sm hover:bg-secondary/40 transition-colors"
             >
               <GoogleIcon className="w-4 h-4 text-muted-foreground" />
-              <span>Sign up with Google</span>
+              <span>Continue with Google</span>
             </button>
 
             <button
@@ -103,7 +103,7 @@ export default function SignupPage() {
               className="w-full h-9 rounded-xl bg-background border border-slate-300 dark:border-slate-600 text-foreground font-medium flex items-center justify-center gap-2 text-sm hover:bg-secondary/40 transition-colors"
             >
               <GitHubIcon className="w-4 h-4 text-muted-foreground" />
-              <span>Sign up with GitHub</span>
+              <span>Continue with GitHub</span>
             </button>
           </div>
 

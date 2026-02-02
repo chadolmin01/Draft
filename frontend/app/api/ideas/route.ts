@@ -1,15 +1,65 @@
 /**
- * POST /api/ideas
- * 아이디어 생성 (Stage 1)
- * DB 연동 시 Supabase에 저장, 미설정 시 메모리 응답만
+ * /api/ideas
+ * GET: 로그인 사용자의 아이디어 목록 조회 (user_id 기준)
+ * POST: 아이디어 생성 (Stage 1)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import { callGemini, parseJsonResponse } from '@/lib/gemini';
 import { loadPrompt } from '@/lib/prompts';
 import { generateMockStage1Analysis } from '@/lib/mock-data';
 import { createIdea, isDbEnabled } from '@/lib/db';
 import type { CreateIdeaRequest, IdeaAnalysis } from '@/lib/types';
+
+export async function GET() {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    });
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+
+    const { data, error } = await supabase
+      .from('ideas')
+      .select('id, idea, tier, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('GET /api/ideas error:', error);
+      return NextResponse.json({ success: true, data: [] });
+    }
+
+    const items = (data || []).map((row) => ({
+      id: row.id,
+      idea: row.idea,
+      tier: row.tier,
+      createdAt: row.created_at,
+    }));
+
+    return NextResponse.json({ success: true, data: items });
+  } catch (error) {
+    console.error('GET /api/ideas error:', error);
+    return NextResponse.json({ success: true, data: [] });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,6 +132,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // API 키 확인
+    const apiKey = process.env.GOOGLE_API_KEY?.trim();
+    if (!apiKey || apiKey === 'your_google_api_key') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_API_KEY',
+            message: 'API 키가 설정되지 않았습니다. frontend/.env.local에 GOOGLE_API_KEY를 설정하세요.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+
     // 프롬프트 로드
     const promptTemplate = loadPrompt(1, tier);
     const prompt = promptTemplate.replace('{USER_IDEA}', idea);
@@ -128,15 +193,31 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error creating idea:', error);
+    const err = error instanceof Error ? error : new Error('Unknown error');
+    console.error('[POST /api/ideas] Error:', err.message);
+    if (err.stack) console.error(err.stack);
+
+    // 사용자 친화적 메시지로 변환
+    let code = 'INTERNAL_ERROR';
+    let message = err.message;
+    if (message.includes('API key') || message.includes('API 키')) {
+      code = 'INVALID_API_KEY';
+      message = 'API 키가 유효하지 않습니다. Google AI Studio에서 새 키를 발급해 .env.local에 설정하세요.';
+    } else if (message.includes('429') || message.includes('quota') || message.includes('한도')) {
+      code = 'RATE_LIMIT_EXCEEDED';
+      message = 'API 호출 한도를 초과했습니다. 잠시 후 또는 내일 다시 시도해주세요.';
+    } else if (message.includes('network') || message.includes('fetch')) {
+      code = 'NETWORK_ERROR';
+      message = 'Gemini API에 연결할 수 없습니다. 인터넷 연결과 방화벽을 확인하세요.';
+    } else if (message.includes('JSON') || message.includes('parse')) {
+      code = 'PARSE_ERROR';
+      message = 'AI 응답 처리 중 오류가 발생했습니다. 다시 시도해주세요.';
+    }
 
     return NextResponse.json(
       {
         success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: error instanceof Error ? error.message : 'Internal server error',
-        },
+        error: { code, message },
       },
       { status: 500 }
     );

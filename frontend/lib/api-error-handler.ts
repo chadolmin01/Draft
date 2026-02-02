@@ -29,6 +29,16 @@ export function parseGeminiError(error: any): ApiError {
     };
   }
 
+  // 404 Model Not Found
+  if (error.message?.includes('404') || error.message?.includes('not found') || error.message?.includes('is not found')) {
+    return {
+      code: 'MODEL_NOT_FOUND',
+      message: '모델을 찾을 수 없습니다',
+      details: 'Gemini 모델이 변경되었을 수 있습니다. gemini-2.5-flash 또는 gemini-2.0-flash를 사용해보세요.',
+      isRetryable: false,
+    };
+  }
+
   // 401 Authentication Error
   if (error.message?.includes('401') || error.message?.includes('API key')) {
     return {

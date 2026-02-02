@@ -30,3 +30,6 @@ nul
 # Test outputs
 tests/outputs/
 *.log
+
+# Supabase
+supabase/.temp/

@@ -78,14 +78,14 @@ API 호출 없이 목업 데이터로 테스트할 때 사용합니다.
 ### 최소 설정 (Gemini만)
 
 ```env
-GOOGLE_API_KEY=AIzaSyANNCuPuIsAfUBdk2Y1TN0vixI2lGWoJ5Q
+GOOGLE_API_KEY=여기에_Google_AI_Studio에서_발급한_키_붙여넣기
 ```
 
 ### 전체 설정 (Gemini + Supabase)
 
 ```env
-# Google Gemini API (필수)
-GOOGLE_API_KEY=AIzaSyANNCuPuIsAfUBdk2Y1TN0vixI2lGWoJ5Q
+# Google Gemini API (필수) - https://aistudio.google.com/app/apikey 에서 발급
+GOOGLE_API_KEY=여기에_발급한_API_키_붙여넣기
 
 # Supabase (DB + Auth)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -104,7 +104,8 @@ cd frontend
 npm run dev
 ```
 
-- `GOOGLE_API_KEY` 없음 → API 호출 시 "API key" 관련 오류
+- `GOOGLE_API_KEY` 없음/유효하지 않음 → API 호출 시 "API 키가 유효하지 않습니다" 오류  
+  → [Google AI Studio](https://aistudio.google.com/app/apikey)에서 새 키 발급 후 `frontend/.env.local`에 설정하고 개발 서버 재시작
 - Supabase 변수 없음 → DB/인증 비활성화, localStorage 사용
 
 ### Supabase 연결 확인
