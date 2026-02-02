@@ -12,6 +12,8 @@ interface AuthContextType {
   session: Session | null;
   /** 계정 티어 (profiles.tier). 가입=light, 결제/수동업그레이드=pro/heavy */
   userTier: Tier;
+  /** userTier 로딩 중 (로그인 시 profile fetch 대기) */
+  userTierLoading: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -25,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userTier, setUserTier] = useState<Tier>('light');
+  const [userTierLoading, setUserTierLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
@@ -58,8 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) {
       setUserTier('light');
+      setUserTierLoading(false);
       return;
     }
+    setUserTierLoading(true);
     fetch('/api/profile')
       .then((res) => res.json())
       .then((json) => {
@@ -69,7 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserTier('light');
         }
       })
-      .catch(() => setUserTier('light'));
+      .catch(() => setUserTier('light'))
+      .finally(() => setUserTierLoading(false));
   }, [user?.id]);
 
   const signIn = async (email: string, password: string) => {
@@ -101,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userTier, loading, signIn, signUp, signInWithOAuth, signOut }}>
+    <AuthContext.Provider value={{ user, session, userTier, userTierLoading, loading, signIn, signUp, signInWithOAuth, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -114,6 +120,7 @@ export function useAuth() {
       user: null,
       session: null,
       userTier: 'light' as Tier,
+      userTierLoading: false,
       loading: false,
       signIn: async () => ({ error: new Error('Auth not configured') }),
       signUp: async () => ({ error: new Error('Auth not configured') }),

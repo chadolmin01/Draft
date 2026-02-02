@@ -97,7 +97,7 @@ export function HeroInput({
               title={tierReadOnly ? '계정 플랜 (결제로 업그레이드)' : undefined}
             >
               {tiers.find(t => t.value === tier)?.label || 'Expert'}
-              {!tierReadOnly && <ChevronDown className="w-3 h-3" />}
+              <ChevronDown className="w-3 h-3" />
             </button>
             {isTierOpen && (
               <div className="absolute top-full mt-2 right-0 w-28 bg-popover border border-border/60 rounded-lg shadow-lg py-1 z-50">

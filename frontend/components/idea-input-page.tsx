@@ -13,11 +13,12 @@ const PENDING_KEY = 'pending_idea_submit';
 export function IdeaInputPage() {
   const [idea, setIdea] = useState('');
   const [tier, setTier] = useState<Tier>('light');
-  const { user, userTier } = useAuth();
+  const { user, userTier, userTierLoading } = useAuth();
 
   // 로그인 시 계정 티어(profile.tier) 사용, 비로그인 시 선택한 tier
   const effectiveTier = user ? userTier : tier;
   const isDeepDraft = effectiveTier === 'pro' || effectiveTier === 'heavy';
+  const showTitleSkeleton = user && userTierLoading;
 
   const handleSubmit = () => {
     if (!idea.trim()) return;
@@ -41,10 +42,18 @@ export function IdeaInputPage() {
           <LogoSliced className="w-12 h-12 flex-shrink-0" />
           <div className="flex flex-col">
             <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-              {isDeepDraft ? 'DeepDraft' : 'Draft'}
+              {showTitleSkeleton ? (
+                <span className="inline-block w-24 h-8 animate-pulse bg-muted rounded" />
+              ) : (
+                isDeepDraft ? 'DeepDraft' : 'Draft'
+              )}
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground font-light">
-              {isDeepDraft ? '심층 분석으로 비즈니스 플랜 완성' : 'Make your first Draft'}
+              {showTitleSkeleton ? (
+                <span className="inline-block w-40 h-4 animate-pulse bg-muted rounded mt-1" />
+              ) : (
+                isDeepDraft ? '심층 분석으로 비즈니스 플랜 완성' : 'Make your first Draft'
+              )}
             </p>
           </div>
         </motion.div>
