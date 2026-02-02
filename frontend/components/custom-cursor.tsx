@@ -14,6 +14,7 @@ export function CustomCursor({ className, enabled = true }: CustomCursorProps) {
   const cursorDotRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const mouseRef = useRef({ x: 0, y: 0 });
   const posRef = useRef({ x: 0, y: 0 });
 
@@ -31,6 +32,7 @@ export function CustomCursor({ className, enabled = true }: CustomCursorProps) {
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
+      setHasMoved(true);
     };
 
     const handleMouseEnter = () => {
@@ -117,8 +119,9 @@ export function CustomCursor({ className, enabled = true }: CustomCursorProps) {
         ref={cursorRef}
         className={cn(
           'fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] rounded-full border-2 border-primary',
-          'opacity-0 transition-opacity duration-300',
+          'transition-opacity duration-300',
           'hidden md:block',
+          hasMoved ? 'opacity-100' : 'opacity-0',
           className
         )}
         style={{ willChange: 'transform' }}
@@ -127,8 +130,8 @@ export function CustomCursor({ className, enabled = true }: CustomCursorProps) {
         ref={cursorDotRef}
         className={cn(
           'fixed top-0 left-0 w-2 h-2 pointer-events-none z-[9999] rounded-full bg-primary',
-          'opacity-0 md:opacity-100 transition-opacity duration-300',
-          'hidden md:block'
+          'transition-opacity duration-300 hidden md:block',
+          hasMoved ? 'opacity-100' : 'opacity-0'
         )}
         style={{ willChange: 'transform' }}
       />

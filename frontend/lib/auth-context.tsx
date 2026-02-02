@@ -3,12 +3,15 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import type { Tier } from '@/lib/types';
 
 type OAuthProvider = 'google' | 'github';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  /** 계정 티어 (profiles.tier). 가입=light, 결제/수동업그레이드=pro/heavy */
+  userTier: Tier;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -21,6 +24,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userTier, setUserTier] = useState<Tier>('light');
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
@@ -49,6 +53,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription?.unsubscribe();
     };
   }, [supabase]);
+
+  // 로그인 시 profile.tier 조회
+  useEffect(() => {
+    if (!user) {
+      setUserTier('light');
+      return;
+    }
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.tier) {
+          setUserTier(json.data.tier as Tier);
+        } else {
+          setUserTier('light');
+        }
+      })
+      .catch(() => setUserTier('light'));
+  }, [user?.id]);
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) return { error: new Error('Auth not configured') };
@@ -79,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signInWithOAuth, signOut }}>
+    <AuthContext.Provider value={{ user, session, userTier, loading, signIn, signUp, signInWithOAuth, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -91,6 +113,7 @@ export function useAuth() {
     return {
       user: null,
       session: null,
+      userTier: 'light' as Tier,
       loading: false,
       signIn: async () => ({ error: new Error('Auth not configured') }),
       signUp: async () => ({ error: new Error('Auth not configured') }),

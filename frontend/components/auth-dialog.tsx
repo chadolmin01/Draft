@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth-context';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn, UserPlus, X } from 'lucide-react';
@@ -22,6 +23,7 @@ export function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialog
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -43,7 +45,15 @@ export function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialog
         : await signUp(email, password);
 
       if (err) {
-        setError(err.message);
+        // 이메일 미확인 시 안내 메시지
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('email') && msg.toLowerCase().includes('confirm')) {
+          setError('이메일 확인이 필요합니다. 가입 시 발송된 메일의 확인 링크를 클릭해주세요.');
+        } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
+          setError('이메일 또는 비밀번호가 올바르지 않습니다. 이메일 확인 링크를 클릭하셨나요?');
+        } else {
+          setError(err.message);
+        }
         setLoading(false);
         return;
       }
@@ -57,6 +67,23 @@ export function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialog
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    const supabase = createClient();
+    if (!supabase) return;
+    setResendLoading(true);
+    setError(null);
+    const { error: err } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    setResendLoading(false);
+    if (err) {
+      setError(err.message);
+    } else {
+      setSuccess('확인 메일을 다시 발송했습니다. 받은편지함을 확인해주세요.');
     }
   };
 
@@ -115,7 +142,21 @@ export function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialog
           </div>
 
           {error && (
-            <p className="text-xs text-destructive">{error}</p>
+            <div className="space-y-2">
+              <p className="text-xs text-destructive">{error}</p>
+              {(error.includes('이메일 확인') || error.includes('확인 링크')) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={handleResendConfirmation}
+                  disabled={resendLoading || !email}
+                >
+                  {resendLoading ? '발송 중...' : '확인 메일 다시 보내기'}
+                </Button>
+              )}
+            </div>
           )}
           {success && (
             <p className="text-xs text-green-600 dark:text-green-400">{success}</p>

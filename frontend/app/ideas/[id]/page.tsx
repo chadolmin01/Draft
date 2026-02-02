@@ -1,9 +1,25 @@
 'use client';
 
 import { IdeaAnalysisPage } from '@/components/idea-analysis-page';
+import { GrokLayout } from '@/components/grok-layout';
+import { LogoSliced } from '@/components/logo-sliced';
 import { getMockIdea } from '@/lib/mock-data';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
+function LoadingView() {
+  return (
+    <GrokLayout>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <div className="relative w-20 h-20 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-foreground/15 border-t-foreground/60 animate-spin" />
+          <LogoSliced className="relative w-12 h-12 text-foreground/90" />
+        </div>
+        <p className="text-sm text-muted-foreground">아이디어를 분석하고 있습니다...</p>
+      </div>
+    </GrokLayout>
+  );
+}
 
 export default function IdeaPage() {
   const params = useParams();
@@ -22,7 +38,20 @@ export default function IdeaPage() {
         return;
       }
 
-      // 1. API에서 DB 조회 시도 (Supabase 설정된 경우)
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem(`idea_${id}`);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            setData(parsed);
+            setLoading(false);
+            return;
+          } catch {
+            // parse 실패 시 API 시도
+          }
+        }
+      }
+
       try {
         const res = await fetch(`/api/ideas/${id}`);
         if (res.ok) {
@@ -32,7 +61,6 @@ export default function IdeaPage() {
             const stage2 = json.stage2;
             const stage2Deep = json.stage2Deep;
             const report = json.report;
-            // localStorage에 동기화 (idea-analysis-page가 localStorage 사용)
             if (typeof window !== 'undefined') {
               localStorage.setItem(`idea_${id}`, JSON.stringify(apiData));
               if (stage2) localStorage.setItem(`idea_${id}_stage2`, JSON.stringify(stage2));
@@ -54,8 +82,7 @@ export default function IdeaPage() {
         // API 실패 시 localStorage 폴백
       }
 
-      // 2. localStorage 폴백
-      const stored = localStorage.getItem(`idea_${id}`);
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(`idea_${id}`) : null;
       if (stored) {
         setData(JSON.parse(stored));
       } else if (mockData) {
@@ -69,14 +96,7 @@ export default function IdeaPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      </div>
-    );
+    return <LoadingView />;
   }
 
   if (!data) {

@@ -11,8 +11,10 @@ import { RateLimitNotice } from '@/components/rate-limit-notice';
 import { isMockMode } from '@/lib/mock-mode';
 import { cn } from '@/lib/utils';
 import { StaggerContainer, StaggerItem, SlideUp } from '@/components/page-transition';
-import { Target, AlertCircle, Lightbulb, DollarSign, TrendingUp, Building2, AlertTriangle, BarChart3, Crosshair, Globe, MessageSquare, FileText, Sliders, ChevronLeft, ChevronRight, Search, SquarePen, AlignLeft, Clock, UserCircle } from 'lucide-react';
+import { Target, AlertCircle, Lightbulb, DollarSign, TrendingUp, Building2, AlertTriangle, BarChart3, Crosshair, Globe, MessageSquare, FileText, Sliders, ChevronLeft, ChevronRight, Search, SquarePen, AlignLeft, Clock, UserCircle, Lock, LogOut, X, Home, Settings, CreditCard } from 'lucide-react';
 import { LogoSliced } from '@/components/logo-sliced';
+import { useAuth } from '@/lib/auth-context';
+import { getAllIdeasFromStorage } from '@/lib/ideas-local';
 import type { 
   GetIdeaResponse, 
   Tier,
@@ -26,6 +28,15 @@ import type {
 
 interface IdeaAnalysisPageProps {
   data: GetIdeaResponse;
+}
+
+type PanelType = 'search' | 'library' | 'history' | null;
+
+interface IdeaListItem {
+  id: string;
+  idea: string;
+  tier: string;
+  createdAt: string;
 }
 
 // 심화 분석 상태 타입
@@ -118,6 +129,14 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
       );
     }
   }
+  const { user, signOut } = useAuth();
+  const [openPanel, setOpenPanel] = useState<PanelType>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<IdeaListItem[]>([]);
+  const [libraryItems, setLibraryItems] = useState<IdeaListItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const [feedback, setFeedback] = useState('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
@@ -342,6 +361,65 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Profile menu outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    if (profileMenuOpen) document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [profileMenuOpen]);
+
+  // Load history when panel opens
+  useEffect(() => {
+    if (openPanel !== 'history') return;
+    const loadHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        if (user) {
+          const res = await fetch('/api/ideas');
+          const json = await res.json();
+          setHistoryItems(json.success && json.data ? json.data : []);
+        } else {
+          setHistoryItems(getAllIdeasFromStorage());
+        }
+      } catch {
+        setHistoryItems([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    loadHistory();
+  }, [openPanel, user]);
+
+  // Load library when panel opens
+  useEffect(() => {
+    if (openPanel !== 'library') return;
+    const loadLibrary = async () => {
+      setLibraryLoading(true);
+      try {
+        if (user) {
+          const res = await fetch('/api/ideas');
+          const json = await res.json();
+          setLibraryItems(json.success && json.data ? json.data : []);
+        } else {
+          setLibraryItems(getAllIdeasFromStorage());
+        }
+      } catch {
+        setLibraryItems([]);
+      } finally {
+        setLibraryLoading(false);
+      }
+    };
+    loadLibrary();
+  }, [openPanel, user]);
+
+  const handlePanelToggle = (panel: PanelType) => {
+    setOpenPanel(openPanel === panel ? null : panel);
+  };
 
   // Keyboard navigation for sections
   useEffect(() => {
@@ -582,16 +660,72 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
                 </Button>
               </div>
             ) : (
-              // Tier Lock for Light users
-              <div className="bg-card border border-border/60 rounded-lg p-6 text-center">
-                <div className="text-sm text-muted-foreground mb-3">업그레이드 필요</div>
-                <h3 className="text-base font-medium text-foreground mb-2">Pro 플랜 전용</h3>
-                <p className="text-muted-foreground mb-5 text-xs font-light leading-relaxed">
-                  심층적인 시장 데이터와 경쟁사 분석
-                </p>
-                <Button className="w-full text-xs font-medium h-8 font-sans">
-                  업그레이드
-                </Button>
+              // Tier Lock for Light users: Pro 레이아웃 미리보기 + 블러 + 잠금
+              <div className="relative">
+                {/* Pro 레이아웃 미리보기 (목업 데이터) */}
+                <div className="blur-[2px] opacity-85 pointer-events-none select-none">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="bg-card border border-border/60 rounded-lg p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-4 h-4 text-foreground/60" />
+                        <h3 className="text-sm font-medium text-foreground">시장 분석</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded border border-border/40">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">시장 규모</span>
+                          <span className="text-sm font-semibold text-foreground font-sans">—</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded border border-border/40">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">성장률</span>
+                          <span className="text-sm font-semibold text-foreground font-sans">—</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-foreground/5 rounded border border-foreground/10">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">실현 가능성</span>
+                          <span className="text-sm font-semibold text-foreground font-sans">—/100</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-card border border-border/60 rounded-lg p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Building2 className="w-4 h-4 text-foreground/60" />
+                        <h3 className="text-sm font-medium text-foreground">경쟁사 분석</h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="p-3 bg-secondary/20 rounded border border-border/40">
+                            <h4 className="text-xs font-medium text-foreground mb-1.5">경쟁사 {i}</h4>
+                            <p className="text-[10px] text-muted-foreground font-sans line-clamp-2">—</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="lg:col-span-2 bg-card border border-border/60 rounded-lg p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <AlertTriangle className="w-4 h-4 text-foreground/60" />
+                        <h3 className="text-sm font-medium text-foreground">주요 위험 요소</h3>
+                      </div>
+                      <ul className="space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <li key={i} className="flex items-start gap-2 p-2 bg-foreground/[0.02] rounded border border-foreground/5">
+                            <span className="w-1 h-1 rounded-full bg-foreground/40 mt-1.5 flex-shrink-0" />
+                            <span className="text-xs text-foreground/80 font-sans">—</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                {/* 잠금 오버레이 */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/30 backdrop-blur-[2px] rounded-lg">
+                  <Lock className="w-12 h-12 text-foreground/60 mb-3" />
+                  <p className="text-sm font-medium text-foreground mb-1">Pro 플랜 전용</p>
+                  <p className="text-xs text-muted-foreground mb-4">심층적인 시장 데이터와 경쟁사 분석</p>
+                  <Link href="/upgrade">
+                    <Button className="text-xs font-medium h-8 font-sans px-5">
+                      업그레이드
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )
           ) : (
@@ -751,16 +885,35 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
               </DeepAnalysisCard>
             </div>
           ) : (
-            // Tier Lock for Light users
-            <div className="bg-card border border-border/60 rounded-lg p-6 text-center">
-              <div className="text-sm text-muted-foreground mb-3">업그레이드 필요</div>
-              <h3 className="text-base font-medium text-foreground mb-2">Pro 플랜 전용</h3>
-              <p className="text-muted-foreground mb-5 text-xs font-light leading-relaxed">
-                전략 분석 및 자원 추정
-              </p>
-              <Button className="w-full text-xs font-medium h-8 font-sans">
-                업그레이드
-              </Button>
+            // Tier Lock for Light users: Pro 레이아웃 미리보기 + 블러 + 잠금
+            <div className="relative">
+              {/* Pro 레이아웃 미리보기 (3열 카드) */}
+              <div className="blur-[2px] opacity-85 pointer-events-none select-none">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+                  {[
+                    { title: '시장 심화 분석', desc: 'TAM/SAM/SOM, 포지셔닝 맵, 가격 벤치마킹', icon: <TrendingUp className="w-6 h-6" /> },
+                    { title: '전략 & 실행', desc: 'SWOT 분석, 시장 진입 전략, 필요 자원 추정', icon: <Crosshair className="w-6 h-6" /> },
+                    { title: '외부 환경', desc: '규제 이슈, 투자 트렌드, 유사 사례 분석', icon: <Globe className="w-6 h-6" /> },
+                  ].map((card, i) => (
+                    <div key={i} className="relative rounded-lg border border-border/60 overflow-hidden bg-card min-h-[300px] flex flex-col items-center justify-center p-5">
+                      <div className="flex justify-center text-foreground/40 mb-3">{card.icon}</div>
+                      <h4 className="text-sm font-medium text-foreground mb-2">{card.title}</h4>
+                      <p className="text-xs text-muted-foreground font-light leading-relaxed text-center">{card.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* 잠금 오버레이 */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/30 backdrop-blur-[2px] rounded-lg">
+                <Lock className="w-12 h-12 text-foreground/60 mb-3" />
+                <p className="text-sm font-medium text-foreground mb-1">Pro 플랜 전용</p>
+                <p className="text-xs text-muted-foreground mb-4">전략 분석 및 자원 추정</p>
+                <Link href="/upgrade">
+                  <Button className="text-xs font-medium h-8 font-sans px-5">
+                    업그레이드
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -822,64 +975,115 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className="w-14 flex-col items-center py-3 hidden md:flex border-r border-border/50 flex-shrink-0">
-        <Link href="/" className="mb-4 p-1">
-          <LogoSliced className="w-9 h-9" />
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      {/* Sidebar - GrokLayout 스타일 (초기 화면과 동일) */}
+      <aside className="relative z-10 w-11 flex flex-col items-center py-2 hidden md:flex border-r border-border/50 flex-shrink-0">
+        <Link href="/" className="mb-2 p-0.5">
+          <LogoSliced className="w-7 h-7" />
         </Link>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5">
           <button
+            onClick={() => handlePanelToggle('search')}
             className={cn(
-              "p-2.5 rounded-lg transition-colors",
+              "p-1.5 rounded-md transition-colors",
               "hover:bg-secondary/80 dark:hover:bg-secondary/40",
-              "text-muted-foreground hover:text-foreground"
+              openPanel === 'search' ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             title="Search"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-4 w-4" />
           </button>
           <Link
             href="/"
             className={cn(
-              "p-2.5 rounded-lg transition-colors",
+              "p-1.5 rounded-md transition-colors",
               "hover:bg-secondary/80 dark:hover:bg-secondary/40",
               "text-muted-foreground hover:text-foreground"
             )}
             title="New Chat"
           >
-            <SquarePen className="h-5 w-5" />
+            <SquarePen className="h-4 w-4" />
           </Link>
           <button
+            onClick={() => handlePanelToggle('library')}
             className={cn(
-              "p-2.5 rounded-lg transition-colors",
+              "p-1.5 rounded-md transition-colors",
               "hover:bg-secondary/80 dark:hover:bg-secondary/40",
-              "text-muted-foreground hover:text-foreground"
+              openPanel === 'library' ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             title="Library"
           >
-            <AlignLeft className="h-5 w-5" />
+            <AlignLeft className="h-4 w-4" />
           </button>
           <button
+            onClick={() => handlePanelToggle('history')}
             className={cn(
-              "p-2.5 rounded-lg transition-colors",
+              "p-1.5 rounded-md transition-colors",
               "hover:bg-secondary/80 dark:hover:bg-secondary/40",
-              "text-muted-foreground hover:text-foreground"
+              openPanel === 'history' ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
             title="History"
           >
-            <Clock className="h-5 w-5" />
+            <Clock className="h-4 w-4" />
           </button>
         </nav>
-        <div className="mt-auto flex flex-col gap-1">
-          <button title="Profile" className="p-2.5 rounded-lg hover:bg-secondary/80 dark:hover:bg-secondary/40 text-muted-foreground hover:text-foreground">
-            <UserCircle className="h-5 w-5" />
-          </button>
-        </div>
+        {user && (
+          <div className="mt-auto flex flex-col gap-0.5 relative" ref={profileMenuRef}>
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              title="Profile"
+              className={cn(
+                "p-1.5 rounded-md transition-colors",
+                "hover:bg-secondary/80 dark:hover:bg-secondary/40",
+                profileMenuOpen ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <UserCircle className="h-4 w-4" />
+            </button>
+            {profileMenuOpen && (
+              <div className="absolute bottom-full left-0 mb-1.5 w-40 py-1.5 bg-white dark:bg-zinc-900 border border-border/50 rounded-lg shadow-xl z-50">
+                <Link
+                  href="/"
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary/50 transition-colors"
+                >
+                  <Home className="h-3.5 w-3.5" />
+                  홈으로 가기
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary/50 transition-colors"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  설정
+                </Link>
+                <Link
+                  href="/upgrade"
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary/50 transition-colors"
+                >
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Upgrade
+                </Link>
+                <button
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    signOut();
+                  }}
+                  className="flex items-center gap-2 w-full px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary/50 transition-colors text-left"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  로그아웃
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Fixed Header */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -937,8 +1141,8 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
           </div>
         </motion.div>
 
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Scrollable Content Area - data-lenis-prevent: Lenis가 이 영역 스크롤을 가로채지 않도록 */}
+      <div className="flex-1 overflow-y-auto min-h-0" data-lenis-prevent>
         {/* Main Content - Horizontal Slide Sections */}
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-6">
         <AnimatePresence initial={false} mode="wait">
@@ -963,7 +1167,7 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
           disabled={currentSection === 0}
           aria-label="이전 섹션"
           className={cn(
-            "hidden md:flex fixed left-16 top-1/2 -translate-y-1/2 z-40",
+            "hidden md:flex fixed left-12 top-1/2 -translate-y-1/2 z-40",
             "p-3 rounded-lg items-center justify-center",
             "opacity-30 hover:opacity-100 transition-all duration-300",
             "hover:bg-secondary/20",
@@ -1028,6 +1232,94 @@ export function IdeaAnalysisPage({ data }: IdeaAnalysisPageProps) {
           <div ref={analysisCardsRef} className="hidden" />
         </div>
       </div>
+
+        {/* Side Panel (GrokLayout과 동일) */}
+        {openPanel && (
+          <>
+            <div
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm z-20"
+              onClick={() => setOpenPanel(null)}
+            />
+            <div className="absolute top-0 right-0 h-full w-96 bg-background border-l border-border/50 z-30 shadow-2xl">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between p-4 border-b border-border/50">
+                  <h2 className="text-lg font-semibold">
+                    {openPanel === 'search' && 'Search'}
+                    {openPanel === 'library' && 'Library'}
+                    {openPanel === 'history' && 'History'}
+                  </h2>
+                  <button
+                    onClick={() => setOpenPanel(null)}
+                    className="p-2 rounded-lg hover:bg-secondary/80 dark:hover:bg-secondary/40 transition-colors"
+                    aria-label="닫기"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-auto p-4">
+                  {openPanel === 'search' && (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full px-4 py-2 rounded-lg border border-border/50 bg-secondary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                      <div className="text-sm text-muted-foreground text-center py-8">
+                        Search results will appear here
+                      </div>
+                    </div>
+                  )}
+                  {openPanel === 'library' && (
+                    <div className="space-y-3">
+                      {libraryLoading ? (
+                        <div className="text-sm text-muted-foreground text-center py-8">로딩 중...</div>
+                      ) : libraryItems.length === 0 ? (
+                        <div className="text-sm text-muted-foreground text-center py-8">저장한 아이디어가 없어요</div>
+                      ) : (
+                        <ul className="space-y-1">
+                          {libraryItems.map((item) => (
+                            <li key={item.id}>
+                              <Link
+                                href={`/ideas/${item.id}`}
+                                onClick={() => setOpenPanel(null)}
+                                className="block px-3 py-2 rounded-lg hover:bg-secondary/50 text-sm text-foreground truncate"
+                              >
+                                {item.idea || '(제목 없음)'}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                  {openPanel === 'history' && (
+                    <div className="space-y-3">
+                      {historyLoading ? (
+                        <div className="text-sm text-muted-foreground text-center py-8">로딩 중...</div>
+                      ) : historyItems.length === 0 ? (
+                        <div className="text-sm text-muted-foreground text-center py-8">아직 아이디어가 없어요</div>
+                      ) : (
+                        <ul className="space-y-1">
+                          {historyItems.map((item) => (
+                            <li key={item.id}>
+                              <Link
+                                href={`/ideas/${item.id}`}
+                                onClick={() => setOpenPanel(null)}
+                                className="block px-3 py-2 rounded-lg hover:bg-secondary/50 text-sm text-foreground truncate"
+                              >
+                                {item.idea || '(제목 없음)'}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

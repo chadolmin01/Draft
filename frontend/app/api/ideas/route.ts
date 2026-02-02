@@ -11,6 +11,7 @@ import { callGemini, parseJsonResponse } from '@/lib/gemini';
 import { loadPrompt } from '@/lib/prompts';
 import { generateMockStage1Analysis } from '@/lib/mock-data';
 import { createIdea, isDbEnabled } from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { CreateIdeaRequest, IdeaAnalysis } from '@/lib/types';
 
 export async function GET() {
@@ -64,7 +65,18 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateIdeaRequest = await request.json();
-    const { idea, tier, userId } = body;
+    let { idea, tier, userId } = body;
+
+    // userId가 있으면 profile.tier 사용 (계정 티어 우선)
+    if (userId) {
+      const admin = createAdminClient();
+      if (admin) {
+        const { data: profile } = await admin.from('profiles').select('tier').eq('id', userId).single();
+        if (profile?.tier && ['light', 'pro', 'heavy'].includes(profile.tier)) {
+          tier = profile.tier;
+        }
+      }
+    }
 
     // 검증
     if (!idea || idea.trim().length === 0) {

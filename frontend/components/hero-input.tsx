@@ -17,6 +17,8 @@ interface HeroInputProps {
   className?: string;
   /** 비로그인 시 Pro/Heavy 비활성화 */
   isLoggedIn?: boolean;
+  /** true면 티어 선택 비활성화 (계정 티어 사용) */
+  tierReadOnly?: boolean;
 }
 
 export function HeroInput({
@@ -29,6 +31,7 @@ export function HeroInput({
   onTierChange,
   className,
   isLoggedIn = true,
+  tierReadOnly = false,
 }: HeroInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isTierOpen, setIsTierOpen] = useState(false);
@@ -83,16 +86,18 @@ export function HeroInput({
           <div className="relative">
             <button
               type="button"
-              onClick={() => !disabled && setIsTierOpen(!isTierOpen)}
+              onClick={() => !disabled && !tierReadOnly && setIsTierOpen(!isTierOpen)}
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
-                "hover:bg-secondary/80 dark:hover:bg-secondary/40",
-                isTierOpen ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground"
+                !tierReadOnly && "hover:bg-secondary/80 dark:hover:bg-secondary/40",
+                isTierOpen ? "bg-secondary/80 dark:bg-secondary/40 text-foreground" : "text-muted-foreground",
+                tierReadOnly && "cursor-default"
               )}
               disabled={disabled}
+              title={tierReadOnly ? '계정 플랜 (결제로 업그레이드)' : undefined}
             >
               {tiers.find(t => t.value === tier)?.label || 'Expert'}
-              <ChevronDown className="w-3 h-3" />
+              {!tierReadOnly && <ChevronDown className="w-3 h-3" />}
             </button>
             {isTierOpen && (
               <div className="absolute top-full mt-2 right-0 w-28 bg-popover border border-border/60 rounded-lg shadow-lg py-1 z-50">
